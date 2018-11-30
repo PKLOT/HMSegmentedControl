@@ -12,6 +12,7 @@
 
 typedef void (^IndexChangeBlock)(NSInteger index);
 typedef NSAttributedString *(^HMTitleFormatterBlock)(HMSegmentedControl *segmentedControl, NSString *title, NSUInteger index, BOOL selected);
+typedef CGFloat (^HMTitleCustomWidthBlock)(HMSegmentedControl *segmentedControl, NSString *title, NSUInteger index);
 
 typedef NS_ENUM(NSInteger, HMSegmentedControlSelectionStyle) {
     HMSegmentedControlSelectionStyleTextWidthStripe, // Indicator width will only be as big as the text width
@@ -29,6 +30,7 @@ typedef NS_ENUM(NSInteger, HMSegmentedControlSelectionIndicatorLocation) {
 typedef NS_ENUM(NSInteger, HMSegmentedControlSegmentWidthStyle) {
     HMSegmentedControlSegmentWidthStyleFixed, // Segment width is fixed
     HMSegmentedControlSegmentWidthStyleDynamic, // Segment width will only be as big as the text width (including inset)
+    HMSegmentedControlSegmentWidthStyleCustom
 };
 
 typedef NS_OPTIONS(NSInteger, HMSegmentedControlBorderType) {
@@ -76,6 +78,9 @@ typedef NS_ENUM(NSInteger, HMSegmentedControlImagePosition) {
  When this block is set, no additional styling is applied to the `NSAttributedString` object returned from this block.
  */
 @property (nonatomic, copy) HMTitleFormatterBlock titleFormatter;
+
+
+@property (nonatomic, copy) HMTitleCustomWidthBlock titleCustomWidth;
 
 /**
  Text attributes to apply to item title text.

@@ -693,6 +693,14 @@
         }
 
         self.segmentWidthsArray = [mutableSegmentWidths copy];
+    } else if (self.type == HMSegmentedControlTypeText && self.segmentWidthStyle == HMSegmentedControlSegmentWidthStyleCustom) {
+        NSMutableArray *mutableSegmentWidths = [NSMutableArray array];
+        [self.sectionTitles enumerateObjectsUsingBlock:^(id titleString, NSUInteger idx, BOOL *stop) {
+            float width = self.titleCustomWidth(self, titleString, idx);
+            [mutableSegmentWidths addObject:[NSNumber numberWithFloat:width]];
+        }];
+        self.segmentWidthsArray = [mutableSegmentWidths copy];
+        
     } else if (self.type == HMSegmentedControlTypeImages) {
         for (UIImage *sectionImage in self.sectionImages) {
             CGFloat imageWidth = sectionImage.size.width + self.segmentEdgeInset.left + self.segmentEdgeInset.right;
