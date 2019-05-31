@@ -268,4 +268,7 @@ typedef NS_ENUM(NSInteger, HMSegmentedControlImagePosition) {
 - (void)subScrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset;
 
 @property (nonatomic, assign) BOOL inClickAniming;
+
+
+@property (nonatomic) CGFloat selectionRaduis;
 @end
