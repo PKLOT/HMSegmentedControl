@@ -22,6 +22,9 @@
 @property (nonatomic, readwrite) NSArray<NSNumber *> *segmentWidthsArray;
 @property (nonatomic, strong) HMScrollView *scrollView;
 
+@property (nonatomic, assign) CGRect currectSelectionIndicatorStripFrame;
+@property (nonatomic, assign) CGRect beforeSelectionIndicatorStripFrame;
+@property (nonatomic, assign) CGRect nextSelectionIndicatorStripFrame;
 @end
 
 @implementation HMScrollView
@@ -502,7 +505,9 @@
             }
         } else {
             if (!self.selectionIndicatorStripLayer.superlayer) {
-                self.selectionIndicatorStripLayer.frame = [self frameForSelectionIndicator];
+                self.selectionIndicatorStripLayer.frame = [self frameForSelectionIndicator:self.selectedSegmentIndex];
+                 [self updateBefareAndAfterFrame:self.selectedSegmentIndex];
+                self.currectSelectionIndicatorStripFrame = self.selectionIndicatorStripLayer.frame;
                 [self.scrollView.layer addSublayer:self.selectionIndicatorStripLayer];
                 self.selectionIndicatorStripLayer.cornerRadius = self.selectionRaduis;
                 
@@ -549,7 +554,7 @@
 }
 
 - (void)setArrowFrame {
-    self.selectionIndicatorArrowLayer.frame = [self frameForSelectionIndicator];
+    self.selectionIndicatorArrowLayer.frame = [self frameForSelectionIndicator:self.selectedSegmentIndex];
     
     self.selectionIndicatorArrowLayer.mask = nil;
     
@@ -582,7 +587,7 @@
     self.selectionIndicatorArrowLayer.mask = maskLayer;
 }
 
-- (CGRect)frameForSelectionIndicator {
+- (CGRect)frameForSelectionIndicator:(NSInteger)selectedSegmentIndex {
     CGFloat indicatorYOffset = 0.0f;
     
     if (self.selectionIndicatorLocation == HMSegmentedControlSelectionIndicatorLocationDown) {
@@ -596,22 +601,22 @@
     CGFloat sectionWidth = 0.0f;
     
     if (self.type == HMSegmentedControlTypeText) {
-        CGFloat stringWidth = [self measureTitleAtIndex:self.selectedSegmentIndex].width;
+        CGFloat stringWidth = [self measureTitleAtIndex:selectedSegmentIndex].width;
         sectionWidth = stringWidth;
     } else if (self.type == HMSegmentedControlTypeImages) {
-        UIImage *sectionImage = [self.sectionImages objectAtIndex:self.selectedSegmentIndex];
+        UIImage *sectionImage = [self.sectionImages objectAtIndex:selectedSegmentIndex];
         CGFloat imageWidth = sectionImage.size.width;
         sectionWidth = imageWidth;
     } else if (self.type == HMSegmentedControlTypeTextImages) {
-		CGFloat stringWidth = [self measureTitleAtIndex:self.selectedSegmentIndex].width;
-		UIImage *sectionImage = [self.sectionImages objectAtIndex:self.selectedSegmentIndex];
+		CGFloat stringWidth = [self measureTitleAtIndex:selectedSegmentIndex].width;
+		UIImage *sectionImage = [self.sectionImages objectAtIndex:selectedSegmentIndex];
 		CGFloat imageWidth = sectionImage.size.width;
         sectionWidth = MAX(stringWidth, imageWidth);
 	}
     
     if (self.selectionStyle == HMSegmentedControlSelectionStyleArrow) {
-        CGFloat widthToEndOfSelectedSegment = (self.segmentWidth * self.selectedSegmentIndex) + self.segmentWidth;
-        CGFloat widthToStartOfSelectedIndex = (self.segmentWidth * self.selectedSegmentIndex);
+        CGFloat widthToEndOfSelectedSegment = (self.segmentWidth * selectedSegmentIndex) + self.segmentWidth;
+        CGFloat widthToStartOfSelectedIndex = (self.segmentWidth * selectedSegmentIndex);
         
         CGFloat x = widthToStartOfSelectedIndex + ((widthToEndOfSelectedSegment - widthToStartOfSelectedIndex) / 2) - (self.selectionIndicatorHeight/2);
         return CGRectMake(x - (self.selectionIndicatorHeight / 2), indicatorYOffset, self.selectionIndicatorHeight * 2, self.selectionIndicatorHeight);
@@ -619,8 +624,8 @@
         if (self.selectionStyle == HMSegmentedControlSelectionStyleTextWidthStripe &&
             sectionWidth <= self.segmentWidth &&
             self.segmentWidthStyle != HMSegmentedControlSegmentWidthStyleDynamic) {
-            CGFloat widthToEndOfSelectedSegment = (self.segmentWidth * self.selectedSegmentIndex) + self.segmentWidth;
-            CGFloat widthToStartOfSelectedIndex = (self.segmentWidth * self.selectedSegmentIndex);
+            CGFloat widthToEndOfSelectedSegment = (self.segmentWidth * selectedSegmentIndex) + self.segmentWidth;
+            CGFloat widthToStartOfSelectedIndex = (self.segmentWidth * selectedSegmentIndex);
             
             CGFloat x = ((widthToEndOfSelectedSegment - widthToStartOfSelectedIndex) / 2) + (widthToStartOfSelectedIndex - sectionWidth / 2);
             return CGRectMake(x + self.selectionIndicatorEdgeInsets.left, indicatorYOffset, sectionWidth - self.selectionIndicatorEdgeInsets.right, self.selectionIndicatorHeight);
@@ -630,15 +635,15 @@
                 
                 NSInteger i = 0;
                 for (NSNumber *width in self.segmentWidthsArray) {
-                    if (self.selectedSegmentIndex == i)
+                    if (selectedSegmentIndex == i)
                         break;
                     selectedSegmentOffset = selectedSegmentOffset + [width floatValue];
                     i++;
                 }
-                return CGRectMake(selectedSegmentOffset + self.selectionIndicatorEdgeInsets.left, indicatorYOffset, [[self.segmentWidthsArray objectAtIndex:self.selectedSegmentIndex] floatValue] - self.selectionIndicatorEdgeInsets.right, self.selectionIndicatorHeight + self.selectionIndicatorEdgeInsets.bottom);
+                return CGRectMake(selectedSegmentOffset + self.selectionIndicatorEdgeInsets.left, indicatorYOffset, [[self.segmentWidthsArray objectAtIndex:selectedSegmentIndex] floatValue] - self.selectionIndicatorEdgeInsets.right, self.selectionIndicatorHeight + self.selectionIndicatorEdgeInsets.bottom);
             }
             
-            return CGRectMake((self.segmentWidth + self.selectionIndicatorEdgeInsets.left) * self.selectedSegmentIndex, indicatorYOffset, self.segmentWidth - self.selectionIndicatorEdgeInsets.right, self.selectionIndicatorHeight);
+            return CGRectMake((self.segmentWidth + self.selectionIndicatorEdgeInsets.left) * selectedSegmentIndex, indicatorYOffset, self.segmentWidth - self.selectionIndicatorEdgeInsets.right, self.selectionIndicatorHeight);
         }
     }
 }
@@ -922,8 +927,12 @@
             [CATransaction setAnimationDuration:0.15f];
             [CATransaction setAnimationTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear]];
             [self setArrowFrame];
-            self.selectionIndicatorBoxLayer.frame = [self frameForSelectionIndicator];
-            self.selectionIndicatorStripLayer.frame = [self frameForSelectionIndicator];
+            self.selectionIndicatorBoxLayer.frame = [self frameForSelectionIndicator:self.selectedSegmentIndex];
+            self.selectionIndicatorStripLayer.frame = [self frameForSelectionIndicator:self.selectedSegmentIndex];
+             [self updateBefareAndAfterFrame:self.selectedSegmentIndex];
+            self.currectSelectionIndicatorStripFrame = self.selectionIndicatorStripLayer.frame;
+            [self updateBefareAndAfterFrame:self.selectedSegmentIndex];
+            
             self.selectionIndicatorBoxLayer.frame = [self frameForFillerSelectionIndicator];
             [CATransaction commit];
         } else {
@@ -933,14 +942,29 @@
             [self setArrowFrame];
             
             self.selectionIndicatorStripLayer.actions = newActions;
-            self.selectionIndicatorStripLayer.frame = [self frameForSelectionIndicator];
-            
+            self.selectionIndicatorStripLayer.frame = [self frameForSelectionIndicator:self.selectedSegmentIndex];
+            [self updateBefareAndAfterFrame:self.selectedSegmentIndex];
+            self.currectSelectionIndicatorStripFrame = self.selectionIndicatorStripLayer.frame;
             self.selectionIndicatorBoxLayer.actions = newActions;
             self.selectionIndicatorBoxLayer.frame = [self frameForFillerSelectionIndicator];
             
             if (notify)
                 [self notifyForSegmentChangeToIndex:index];
         }
+    }
+}
+
+- (void)updateBefareAndAfterFrame:(NSInteger)selectedSegmentIndex {
+    if ((selectedSegmentIndex) - 1 >= 0) {
+        self.beforeSelectionIndicatorStripFrame = [self frameForSelectionIndicator:selectedSegmentIndex-1];
+    } else {
+        self.beforeSelectionIndicatorStripFrame = CGRectNull;
+    }
+    
+    if ((self.selectedSegmentIndex) + 1 < self.sectionTitles.count) {
+        self.nextSelectionIndicatorStripFrame = [self frameForSelectionIndicator:selectedSegmentIndex+1];
+    } else {
+        self.nextSelectionIndicatorStripFrame = CGRectNull;
     }
 }
 
@@ -980,38 +1004,27 @@
 }
 
 -(void)subScrollViewDidScroll:(UIScrollView *)scrollView{
-    
-    CGRect rect1 = self.selectionIndicatorBoxLayer.frame;
+    CGFloat x = [scrollView.panGestureRecognizer translationInView:scrollView].x;
     CGRect rect2 = self.selectionIndicatorStripLayer.frame;
-    rect1.origin.x = scrollView.contentOffset.x / self.sectionTitles.count;
-    rect2.origin.x = scrollView.contentOffset.x / self.sectionTitles.count;
-    self.selectionIndicatorBoxLayer.frame = rect1;
+    if (x > 0) {
+        if (!CGRectIsNull(self.beforeSelectionIndicatorStripFrame)) {
+            x = x * (fabs(self.beforeSelectionIndicatorStripFrame.origin.x - self.currectSelectionIndicatorStripFrame.origin.x)  /  (scrollView.frame.size.width));
+            rect2.origin.x = (self.currectSelectionIndicatorStripFrame.origin.x - x);
+        }
+    } else {
+        if (!CGRectIsNull(self.nextSelectionIndicatorStripFrame)) {
+            x = x * (fabs(self.nextSelectionIndicatorStripFrame.origin.x - self.currectSelectionIndicatorStripFrame.origin.x)  /  (scrollView.frame.size.width));
+            rect2.origin.x = (self.currectSelectionIndicatorStripFrame.origin.x - x);
+        }
+    }
     self.selectionIndicatorStripLayer.frame = rect2;
 }
 - (void)subScrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset{
     CGPoint targtOffect = *targetContentOffset;
     
-    
-    CGFloat offect = targtOffect.x / self.sectionTitles.count;
-    CGRect rect1 = self.selectionIndicatorBoxLayer.frame;
-    CGRect rect2 = self.selectionIndicatorStripLayer.frame;
-    rect1.origin.x = offect;
-    rect2.origin.x = offect;
-    [UIView animateWithDuration:0.15f
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseInOut
-                     animations:^{
-                         self.selectionIndicatorBoxLayer.frame = rect1;
-                         self.selectionIndicatorStripLayer.frame = rect2;
-                         
-                         
-                     } completion:^(BOOL finished){
-                         NSInteger page = 0;
-                         page = targtOffect.x / CGRectGetWidth(self.frame);
-                         if(self.selectedSegmentIndex != page){
-                             [self setSelectedSegmentIndex:page animated:YES];
-                         }
-                     }];
+    NSInteger page = 0;
+    page = targtOffect.x / CGRectGetWidth(self.frame);
+    [self setSelectedSegmentIndex:page animated:YES];
 }   
 
 @end

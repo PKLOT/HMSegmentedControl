@@ -13,14 +13,14 @@
 
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) HMSegmentedControl *segmentedControl4;
-
+@property BOOL willEndDecelerating;
 @end
 
 @implementation ViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+    self.willEndDecelerating = NO;
     self.title = @"HMSegmentedControl Demo";
     self.view.backgroundColor = [UIColor whiteColor];
     self.edgesForExtendedLayout = UIRectEdgeNone;
@@ -104,7 +104,7 @@
     self.segmentedControl4.titleTextAttributes = @{NSForegroundColorAttributeName : [UIColor whiteColor]};
     self.segmentedControl4.selectedTitleTextAttributes = @{NSForegroundColorAttributeName : [UIColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:1]};
     self.segmentedControl4.selectionIndicatorColor = [UIColor colorWithRed:0.3 green:0.3 blue:0.3 alpha:1];
-    self.segmentedControl4.selectionStyle = HMSegmentedControlSelectionStyleBox;
+    self.segmentedControl4.selectionStyle = HMSegmentedControlSelectionStyleTextWidthStripe;
     self.segmentedControl4.selectionIndicatorLocation = HMSegmentedControlSelectionIndicatorLocationUp;
     self.segmentedControl4.tag = 3;
     
@@ -162,10 +162,16 @@
 #pragma mark - UIScrollViewDelegate
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
-    CGFloat pageWidth = scrollView.frame.size.width;
-    NSInteger page = scrollView.contentOffset.x / pageWidth;
-    
-    [self.segmentedControl4 setSelectedSegmentIndex:page animated:YES];
+    self.willEndDecelerating = NO;
+}
+-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    if (NO == self.willEndDecelerating) {
+        [self.segmentedControl4 subScrollViewDidScroll:scrollView];
+    }
+}
+-(void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)veloccity targetContentOffset:(inout CGPoint *)targetContentOffset{
+    self.willEndDecelerating = YES;
+    [self.segmentedControl4 subScrollViewWillEndDragging:scrollView withVelocity:veloccity targetContentOffset:targetContentOffset];
 }
 
 @end
